@@ -1,6 +1,6 @@
 # 🤖 LLM-MCP Travel Orchestrator
 
-A sophisticated multi-agent travel accommodation system leveraging OpenAI's GPT-4o-mini, LangChain, and the Multi-Agent Collaboration Protocol (MCP) to provide intelligent property search and recommendations. This system orchestrates multiple AI agents for query parsing, filtering, summarization, and real-time accommodation recommendations.
+A sophisticated multi-agent travel accommodation system leveraging OpenAI's GPT-4o-mini, LangChain, and the Model Context Protocol (MCP) to provide intelligent property search and recommendations. This system orchestrates multiple AI agents for query parsing, filtering, summarization, and real-time accommodation recommendations.
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32.0-FF4B4B)
