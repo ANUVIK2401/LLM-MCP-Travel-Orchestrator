@@ -1,8 +1,8 @@
 {
   "mcpServers": {
       "airbnb": {
-          "command": "npx",
-          "args": ["-y", "@openbnb/mcp-server-airbnb", "--ignore-robots-txt"]
+          "command": "/opt/homebrew/bin/mcp-server-airbnb",
+          "args": ["--ignore-robots-txt"]
       }
   }
 }
