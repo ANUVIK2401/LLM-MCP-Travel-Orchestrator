@@ -7,7 +7,8 @@ Streamlit travel search app that combines:
 - RAG-based property summaries with metadata fallback
 - a structured results table plus per-listing AI insights
 
-The current app entrypoint is `chatbot.py`.
+The app entrypoint is `chatbot.py`.
+For Streamlit Community Cloud, use `streamlit_app.py` as the main file path.
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32.0-FF4B4B)
@@ -131,6 +132,12 @@ streamlit run chatbot.py
 
 Then open the local URL shown by Streamlit.
 
+You can also run the Streamlit Cloud wrapper locally:
+
+```bash
+streamlit run streamlit_app.py
+```
+
 ## UI Overview
 
 The current UI includes:
@@ -143,21 +150,28 @@ The current UI includes:
 
 ## Screenshots
 
-### Main Interface
-
-![Main interface](assets/images/img1.png)
-
-### Structured Results View
-
-![Structured property results](assets/images/img2.png)
-
-### AI Summary Cards
-
-![AI summary cards](assets/images/img3.png)
-
-### Additional App View
-
-![Additional app view](assets/images/img4.png)
+<table>
+  <tr>
+    <td align="center" valign="top">
+      <strong>Main Interface</strong><br/><br/>
+      <img src="assets/images/img1.png" alt="Main interface" width="100%"/>
+    </td>
+    <td align="center" valign="top">
+      <strong>Structured Results</strong><br/><br/>
+      <img src="assets/images/img2.png" alt="Structured property results" width="100%"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <strong>AI Summary Cards</strong><br/><br/>
+      <img src="assets/images/img3.png" alt="AI summary cards" width="100%"/>
+    </td>
+    <td align="center" valign="top">
+      <strong>Additional View</strong><br/><br/>
+      <img src="assets/images/img4.png" alt="Additional app view" width="100%"/>
+    </td>
+  </tr>
+</table>
 
 ## RAG Summary Behavior
 
@@ -216,11 +230,12 @@ pytest -q
 
 Before deploying, make sure the following are addressed:
 
+- main file path is set to `streamlit_app.py`
 - `OPENAI_API_KEY` is configured in Streamlit secrets or environment settings
-- the Airbnb MCP server binary is available in the deployment environment
-- `airbnb_mcp.json` points to the correct command path for that environment
+- Node.js and npm are available through `packages.txt`
+- `airbnb_mcp.json` launches the Airbnb MCP server with `npx`
 
-Important: the app depends on a local executable MCP server, so deployment is not only a Python dependency problem. The MCP binary and its runtime must also exist in the target environment.
+Important: this app depends on the Airbnb MCP server process at runtime. The repo is now configured to launch it portably with `npx`, which is more suitable for Streamlit Cloud than a machine-specific Homebrew path.
 
 ## Troubleshooting
 
