@@ -231,7 +231,7 @@ pytest -q
 Before deploying, make sure the following are addressed:
 
 - main file path is set to `streamlit_app.py`
-- Python version is set to `3.11` in the Streamlit Community Cloud app settings
+- Python version is set to `3.11` in the Streamlit Community Cloud app settings for the safest redeploy path
 - `OPENAI_API_KEY` is configured in Streamlit secrets
 - Node.js and npm are available through `packages.txt`
 - `airbnb_mcp.json` launches the Airbnb MCP server with `npx`
