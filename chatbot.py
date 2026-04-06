@@ -20,9 +20,12 @@ import streamlit as st
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 
+import nest_asyncio
 import rag
 from listing_parser import ParsedAssistantResponse, PropertyListing, parse_assistant_response, rating_color
 from mcp_use import MCPAgent, MCPClient
+
+nest_asyncio.apply()
 
 # Python 3.13 compatibility fix for asyncio + pydantic deepcopy issues.
 _original_deepcopy = copy.deepcopy
