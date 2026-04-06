@@ -76,6 +76,20 @@ def _get_default_dates() -> tuple[str, str]:
     return checkin, checkout
 
 
+def _get_openai_api_key() -> str:
+    load_dotenv()
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if api_key:
+        return api_key
+
+    try:
+        secret_value = st.secrets.get("OPENAI_API_KEY", "")
+    except Exception:
+        secret_value = ""
+
+    return str(secret_value).strip()
+
+
 _CHECKIN, _CHECKOUT = _get_default_dates()
 
 CUSTOM_SYSTEM_PROMPT = f"""
@@ -914,8 +928,7 @@ def _load_mcp_command() -> str:
 
 
 def get_runtime_diagnostics() -> dict[str, Any]:
-    load_dotenv()
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    api_key = _get_openai_api_key()
     mcp_command = _load_mcp_command()
 
     if not mcp_command:
@@ -927,7 +940,7 @@ def get_runtime_diagnostics() -> dict[str, Any]:
 
     issues: list[str] = []
     if not api_key:
-        issues.append("Add `OPENAI_API_KEY` to your `.env` file.")
+        issues.append("Add `OPENAI_API_KEY` to Streamlit secrets or your local `.env` file.")
     if not MCP_CONFIG_PATH.exists():
         issues.append("`airbnb_mcp.json` is missing from the project root.")
     elif not mcp_command:
@@ -950,8 +963,7 @@ def get_chatbot() -> "SimpleChatbot":
 
 class SimpleChatbot:
     def __init__(self):
-        load_dotenv()
-        self.api_key = os.getenv("OPENAI_API_KEY", "").strip()
+        self.api_key = _get_openai_api_key()
         self.client = MCPClient.from_config_file(str(MCP_CONFIG_PATH))
         self.llm = ChatOpenAI(model="gpt-4o-mini", api_key=self.api_key or None)
         self.agent = MCPAgent(
@@ -1011,7 +1023,10 @@ class SimpleChatbot:
                 return await self.process_message(message, chat_history, retry_count + 1)
 
             if "api key" in error_message.lower():
-                return "OpenAI is not configured yet. Add `OPENAI_API_KEY` to `.env` and rerun the app."
+                return (
+                    "OpenAI is not configured yet. Add `OPENAI_API_KEY` to Streamlit secrets "
+                    "or `.env` and rerun the app."
+                )
             if "timeout" in error_message.lower():
                 return "The Airbnb search timed out. Try the same query again in a moment."
             if "connection" in error_message.lower() or "network" in error_message.lower():

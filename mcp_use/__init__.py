@@ -5,7 +5,7 @@ This library provides a unified interface for connecting different LLMs
 to MCP tools through existing LangChain adapters.
 """
 
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
 from .agents.mcpagent import MCPAgent
 from .client import MCPClient
@@ -14,7 +14,10 @@ from .connectors import BaseConnector, HttpConnector, StdioConnector, WebSocketC
 from .logging import logger
 from .session import MCPSession
 
-__version__ = version("mcp-use")
+try:
+    __version__ = version("mcp-use")
+except PackageNotFoundError:
+    __version__ = "1.1.5"
 
 __all__ = [
     "MCPAgent",
