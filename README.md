@@ -1,11 +1,14 @@
 # LLM-MCP Travel Orchestrator
 
-Streamlit travel search app that combines:
+Streamlit travel search app for live Airbnb discovery, structured listing output, and AI-generated property summaries.
+
+It combines:
 
 - live Airbnb search through an MCP server
-- GPT-powered query handling with LangChain
-- RAG-based property summaries with metadata fallback
-- a structured results table plus per-listing AI insights
+- `gpt-4o-mini` for query handling and listing summarization
+- `text-embedding-3-large` for retrieval on scraped listing content
+- a RAG summary layer with metadata fallback when scraping is weak or blocked
+- a structured results table plus per-listing AI insight cards
 
 The main app module is `chatbot.py`.
 For Streamlit Community Cloud, use `streamlit_app.py` as the main file path.
@@ -13,7 +16,32 @@ For Streamlit Community Cloud, use `streamlit_app.py` as the main file path.
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32.0-FF4B4B)
 ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991)
+![Embeddings](https://img.shields.io/badge/Embeddings-text--embedding--3--large-0F766E)
 ![License](https://img.shields.io/badge/License-MIT-green)
+
+## AI Stack
+
+Current configured models in the codebase:
+
+- chat/search orchestration: `gpt-4o-mini`
+- listing summary generation: `gpt-4o-mini`
+- embeddings: `text-embedding-3-large`
+
+| Layer | Model / Component | Role |
+| --- | --- | --- |
+| Search | Airbnb MCP server | Returns live Airbnb listings from user queries |
+| Reasoning | `gpt-4o-mini` | Interprets the travel request and drives the search flow |
+| Embeddings | `text-embedding-3-large` | Turns listing content into vectors for retrieval |
+| Retrieval | FAISS | Finds the most relevant listing chunks for summary generation |
+| Summary | `gpt-4o-mini` | Produces concise, readable listing summaries |
+
+## Why This Setup
+
+- The app currently uses `gpt-4o-mini`, not `gpt-4o`.
+- `gpt-4o-mini` keeps the app fast enough for interactive travel search while still being strong at query interpretation and concise summarization.
+- `text-embedding-3-large` is used where semantic retrieval matters more than generation speed: identifying the most relevant listing details from scraped page content.
+- RAG improves summary quality by grounding the output in listing-specific text instead of relying only on name, price, and short descriptions.
+- Metadata fallback keeps the app usable even when Airbnb pages are blocked, sparse, or not reliably scrapeable.
 
 ## What It Does
 
@@ -34,6 +62,20 @@ For Streamlit Community Cloud, use `streamlit_app.py` as the main file path.
 5. `rag.py` generates one summary per property:
    - preferred path: scrape, chunk, embed, retrieve, summarize
    - fallback path: summarize from listing metadata already returned by search
+
+## How The AI Pipeline Works
+
+```text
+User Query
+   -> GPT-4o mini interprets budget, city, dates, guest count
+   -> Airbnb MCP server returns live listing results
+   -> listing_parser.py converts response into structured rows
+   -> rag.py fetches listing page content when available
+   -> text-embedding-3-large creates embeddings for listing chunks
+   -> FAISS retrieves the most relevant chunks
+   -> GPT-4o mini writes a concise summary
+   -> if retrieval fails, fallback summary is built from metadata
+```
 
 ## Project Structure
 
@@ -175,40 +217,38 @@ The current UI includes:
 
 ## RAG Summary Behavior
 
-`rag.py` is designed to be robust rather than all-or-nothing.
+`rag.py` is built to be practical, not fragile.
 
-The AI summary tool is implemented well in the current codebase because it does not depend on a single fragile path. It combines retrieval quality, fallback behavior, and caching in a way that is practical for real property listings.
+Instead of assuming every listing page is fully scrapeable, the app uses a two-path summary design:
 
-### What is strong about the current implementation
+### Path 1: Retrieved Summary
 
-- Validates listing URLs before attempting retrieval
-- Extracts both metadata and visible body content from listing pages
-- Filters weak or blocked pages instead of pretending retrieval succeeded
-- Uses chunking and FAISS retrieval to focus the summary on relevant property details
-- Caches vector indexes and summaries to avoid repeating expensive work
-- Falls back to metadata summaries when scraping or retrieval is limited
-- Keeps the app usable even when Airbnb page access is inconsistent
-- Returns concise summaries that fit a fast decision-making UI
+Used when the listing page provides enough usable text.
 
-### Preferred path
+- fetch the Airbnb listing page
+- extract metadata plus visible body content
+- split the content into chunks
+- embed the chunks with `text-embedding-3-large`
+- retrieve the most relevant chunks with FAISS
+- ask `gpt-4o-mini` to write a short factual summary
 
-- fetch listing page
-- extract metadata and body text
-- split into chunks
-- embed with `text-embedding-3-large`
-- retrieve relevant chunks
-- summarize with `gpt-4o-mini`
+### Path 2: Metadata Fallback
 
-### Fallback path
+Used when scraping or retrieval is weak.
 
-If scraping, retrieval, or summary generation fails, the app falls back to metadata already available from the listing search:
-
-- name
+- listing name
 - price
 - rating
-- description
+- description returned by the search
 
-This keeps the summary layer usable even when some Airbnb pages are blocked or incomplete.
+This fallback means the UI still shows useful summaries even when full page retrieval is not possible.
+
+### Why The RAG Layer Helps
+
+- It gives summaries grounded in listing-specific text rather than generic model guesses.
+- It surfaces concrete details such as layout cues, amenities, and neighborhood hints.
+- It keeps summaries short enough for fast comparison across multiple listings.
+- It degrades gracefully instead of failing hard when a listing page is blocked.
 
 ## Testing
 
