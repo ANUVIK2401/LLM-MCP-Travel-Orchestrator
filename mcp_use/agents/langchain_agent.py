@@ -13,7 +13,7 @@ from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.schema.language_model import BaseLanguageModel
 from langchain_core.tools import BaseTool, ToolException
 from mcp.types import CallToolResult, EmbeddedResource, ImageContent, TextContent
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..connectors.base import BaseConnector
 from ..logging import logger
@@ -150,15 +150,16 @@ class LangChainAgent:
                 if tool.name in self.disallowed_tools:
                     continue
 
+                tool_name = tool.name or "NO NAME"
+                tool_description = tool.description or ""
+                tool_args_schema = jsonschema_to_pydantic(self.fix_schema(tool.inputSchema))
+
                 class McpToLangChainAdapter(BaseTool):
-                    name: str = tool.name or "NO NAME"
-                    description: str = tool.description or ""
-                    # Convert JSON schema to Pydantic model for argument validation
-                    args_schema: type[BaseModel] = jsonschema_to_pydantic(
-                        self.fix_schema(tool.inputSchema)  # Apply schema conversion
-                    )
-                    connector: BaseConnector = local_connector
+                    name: str = tool_name
+                    description: str = tool_description
+                    args_schema: type[BaseModel] = tool_args_schema
                     handle_tool_error: bool = True
+                    connector: Any = Field(default=None, exclude=True, repr=False)
 
                     def _run(self, **kwargs: Any) -> NoReturn:
                         """Synchronous run method that always raises an error.
@@ -204,7 +205,7 @@ class LangChainAgent:
                                 return f"Error executing MCP tool: {str(e)}"
                             raise
 
-                tools.append(McpToLangChainAdapter())
+                tools.append(McpToLangChainAdapter(connector=local_connector))
 
         # Log available tools for debugging
         logger.debug(f"Available tools: {[tool.name for tool in tools]}")

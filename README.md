@@ -1,218 +1,269 @@
-# 🤖 LLM-MCP Travel Orchestrator
+# LLM-MCP Travel Orchestrator
 
-A sophisticated multi-agent travel accommodation system leveraging OpenAI's GPT-4o-mini, LangChain, and the Model Context Protocol (MCP) to provide intelligent property search and recommendations. This system orchestrates multiple AI agents for query parsing, filtering, summarization, and real-time accommodation recommendations.
+Streamlit travel search app that combines:
+
+- live Airbnb search through an MCP server
+- GPT-powered query handling with LangChain
+- RAG-based property summaries with metadata fallback
+- a structured results table plus per-listing AI insights
+
+The current app entrypoint is `chatbot.py`.
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32.0-FF4B4B)
-![OpenAI](https://img.shields.io/badge/OpenAI-GPT4o--mini-412991)
-![LangChain](https://img.shields.io/badge/LangChain-0.1.16-FF6B6B)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
----
+## What It Does
 
-## 🧠 Technical Architecture
+- Accepts natural-language travel stay requests such as city, budget, dates, and guest count
+- Calls the Airbnb MCP server for live listing results
+- Parses tool output into structured property rows
+- Renders listings in a stable tabular layout inside Streamlit
+- Generates an AI summary for each property
+- Uses retrieved listing content when possible and falls back to listing metadata when scraping is limited
+- Surfaces runtime and configuration issues directly in the UI
 
-### Multi-Agent System
-- **LLM Orchestration**
-  - GPT-4o-mini powered natural language understanding
-  - Multi-agent collaboration for complex tasks
-  - Context-aware conversation management
-  - Intelligent response generation
-- **LangChain Integration**
-  - Chain-of-thought reasoning
-  - Tool-based execution
-  - Memory management
-  - Response formatting
-- **MCP Server Integration**
-  - Real-time property data access
-  - Asynchronous communication
-  - Robust error handling
-  - Efficient data retrieval
+## Current App Flow
 
-### Core Components
-1. **LLM Agent Layer**
-2. **LangChain Integration Layer**
-3. **MCP Integration Layer**
-4. **User Interface Layer**
+1. User enters a request in the Streamlit app.
+2. `chatbot.py` sends the request through `MCPAgent` using the Airbnb MCP server configured in `airbnb_mcp.json`.
+3. Assistant output is parsed by `listing_parser.py`.
+4. Listings are shown in a structured results table.
+5. `rag.py` generates one summary per property:
+   - preferred path: scrape, chunk, embed, retrieve, summarize
+   - fallback path: summarize from listing metadata already returned by search
 
----
+## Project Structure
 
-## 🚀 Getting Started
+```text
+LLM-MCP-Travel-Orchestrator/
+├── chatbot.py                    # Main Streamlit app
+├── rag.py                        # RAG + metadata fallback summary pipeline
+├── listing_parser.py             # Structured parsing helpers for assistant output
+├── airbnb_use.py                 # Simple CLI example
+├── airbnb_mcp.json               # MCP server configuration
+├── requirements.txt              # App dependencies
+├── pyproject.toml                # Project metadata and tooling config
+├── pytest.ini
+├── mcp_use/                      # MCP client/agent implementation
+├── tests/
+│   └── unit/
+├── assets/images/                # Screenshots
+└── docs/
+```
 
-### Prerequisites
+## Prerequisites
+
 - Python 3.11 or higher
 - Node.js and npm
-- OpenAI API key ([Get one here](https://platform.openai.com))
+- OpenAI API key
+- Airbnb MCP server binary available on the machine
 
-### Installation
+## Installation
 
-1. **Clone the Repository**
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/ANUVIK2401/LLM-MCP-Travel-Orchestrator.git
 cd LLM-MCP-Travel-Orchestrator
 ```
 
-2. **Set Up Virtual Environment**
+### 2. Create and activate a virtual environment
+
 ```bash
 python -m venv venv
-# Activate virtual environment
-# On macOS/Linux:
 source venv/bin/activate
-# On Windows:
-.\venv\Scripts\activate
 ```
 
-3. **Install Dependencies**
+On Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+### 3. Install Python dependencies
+
 ```bash
 pip install -r requirements.txt
+```
+
+### 4. Install the Airbnb MCP server
+
+```bash
 npm install -g @openbnb/mcp-server-airbnb
 ```
 
-4. **Configure Environment**
-Create a `.env` file in the project root and add your OpenAI API key:
+### 5. Configure your environment
+
+Create a `.env` file in the project root:
+
 ```env
 OPENAI_API_KEY=your_api_key_here
 ```
-> ⚠️ **Important**: Never commit your `.env` file or share your API key. The `.env` file is already in `.gitignore` for security.
 
-### Running the Application
+### 6. Verify `airbnb_mcp.json`
+
+The repo currently expects the Airbnb MCP server command in `airbnb_mcp.json`.
+
+Example:
+
+```json
+{
+  "mcpServers": {
+    "airbnb": {
+      "command": "/opt/homebrew/bin/mcp-server-airbnb",
+      "args": ["--ignore-robots-txt"]
+    }
+  }
+}
+```
+
+If your install path is different, update the `command` field accordingly.
+
+## Run Locally
+
+Start the Streamlit app:
 
 ```bash
 streamlit run chatbot.py
 ```
-Then open your browser and navigate to: [http://localhost:8501](http://localhost:8501)
 
----
+Then open the local URL shown by Streamlit.
 
-## 💡 Usage Guide
+## UI Overview
 
-- Property search by location
-- Amenity-based filtering
-- Price range specifications
-- Location-based recommendations
-- Multi-agent collaboration
-- Context-aware conversations
-- Dynamic filtering options
-- Personalized recommendations
+The current UI includes:
 
----
+- runtime diagnostics in the sidebar
+- quick-search presets
+- structured property results table
+- AI summary cards for each listing
+- error surfacing when MCP, OpenAI, or network configuration is incomplete
 
-## 📸 Screenshots
+## Screenshots
 
-| Main Chatbot Interface | Property Search Results |
-|:---------------------:|:----------------------:|
-| ![Main Chatbot Interface](assets/images/img1.png) | ![Property Search Results](assets/images/img2.png) |
+### Main Interface
 
-| Multi-Agent Collaboration | Real-Time Recommendations |
-|:------------------------:|:------------------------:|
-| ![Multi-Agent Collaboration](assets/images/img3.png) | ![Real-Time Recommendations](assets/images/img4.png) |
+![Main interface](assets/images/img1.png)
 
----
+### Structured Results View
 
-## 🗂️ Project Structure
+![Structured property results](assets/images/img2.png)
 
+### AI Summary Cards
+
+![AI summary cards](assets/images/img3.png)
+
+### Additional App View
+
+![Additional app view](assets/images/img4.png)
+
+## RAG Summary Behavior
+
+`rag.py` is designed to be robust rather than all-or-nothing.
+
+The AI summary tool is implemented well in the current codebase because it does not depend on a single fragile path. It combines retrieval quality, fallback behavior, and caching in a way that is practical for real property listings.
+
+### What is strong about the current implementation
+
+- Validates listing URLs before attempting retrieval
+- Extracts both metadata and visible body content from listing pages
+- Filters weak or blocked pages instead of pretending retrieval succeeded
+- Uses chunking and FAISS retrieval to focus the summary on relevant property details
+- Caches vector indexes and summaries to avoid repeating expensive work
+- Falls back to metadata summaries when scraping or retrieval is limited
+- Keeps the app usable even when Airbnb page access is inconsistent
+- Returns concise summaries that fit a fast decision-making UI
+
+### Preferred path
+
+- fetch listing page
+- extract metadata and body text
+- split into chunks
+- embed with `text-embedding-3-large`
+- retrieve relevant chunks
+- summarize with `gpt-4o-mini`
+
+### Fallback path
+
+If scraping, retrieval, or summary generation fails, the app falls back to metadata already available from the listing search:
+
+- name
+- price
+- rating
+- description
+
+This keeps the summary layer usable even when some Airbnb pages are blocked or incomplete.
+
+## Testing
+
+Run focused unit tests:
+
+```bash
+pytest -q tests/unit/test_listing_parser.py tests/unit/test_rag.py
 ```
-LLM-MCP-Travel-Orchestrator/
-├── assets/
-│   └── images/
-├── chatbot.py
-├── airbnb_use.py
-├── airbnb_mcp.json
-├── requirements.txt
-├── pyproject.toml
-├── pytest.ini
-├── LICENSE
-├── .gitignore
-├── docs/
-├── mcp_use/
-│   ├── agents/
-│   ├── connectors/
-│   ├── task_managers/
-│   ├── client.py
-│   ├── config.py
-│   ├── logging.py
-│   ├── session.py
-│   └── __init__.py
-├── tests/
-│   ├── conftest.py
-│   └── unit/
-│       ├── test_client.py
-│       ├── test_config.py
-│       ├── test_http_connector.py
-│       ├── test_logging.py
-│       ├── test_session.py
-│       └── test_stdio_connector.py
-└── venv/
+
+Run the full test suite:
+
+```bash
+pytest -q
 ```
 
----
+## Deployment Notes
 
-## 📚 Documentation
+### Streamlit Community Cloud
 
-- See the `docs/` directory for detailed guides, quickstart, and API reference.
-- Example: [docs/introduction.mdx](docs/introduction.mdx), [docs/quickstart.mdx](docs/quickstart.mdx)
+Before deploying, make sure the following are addressed:
 
----
+- `OPENAI_API_KEY` is configured in Streamlit secrets or environment settings
+- the Airbnb MCP server binary is available in the deployment environment
+- `airbnb_mcp.json` points to the correct command path for that environment
 
-## 🛠️ Development
+Important: the app depends on a local executable MCP server, so deployment is not only a Python dependency problem. The MCP binary and its runtime must also exist in the target environment.
 
-1. Fork the repository
-2. Create a feature branch
-3. Set up your development environment
-4. Make your changes
-5. Test thoroughly (see `tests/` directory)
-6. Submit a pull request
+## Troubleshooting
 
-### Key Dependencies
-- streamlit==1.32.0
-- python-dotenv==1.0.0
-- mcp-use==1.1.5
-- langchain-openai>=0.0.5
-- langchain-community>=0.0.34
-- langchain>=0.1.16
+### The app says the MCP server is not responding
 
----
+Check:
 
-## 🔒 Security Considerations
+- `airbnb_mcp.json` exists
+- the `command` path is correct
+- the MCP binary runs locally
 
-- Keep your API keys secure
-- Never commit sensitive information
-- Use environment variables
-- Regular dependency updates
-- Follow security best practices
+### Summaries fall back to metadata
 
----
+This is expected when:
 
-## 🤝 Contributing
+- a listing page blocks scraping
+- the page does not expose enough usable content
+- retrieval returns weak context
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Streamlit UI loads but searches fail
 
----
+Check:
 
-## 📝 License
+- `OPENAI_API_KEY` is set
+- the MCP server starts successfully
+- your environment can reach OpenAI
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Key Files
 
----
+- `chatbot.py`: main Streamlit app, UI rendering, runtime diagnostics, MCP query flow
+- `listing_parser.py`: parsing and normalization of assistant listing output
+- `rag.py`: listing summarization pipeline with RAG and fallback behavior
+- `mcp_use/agents/langchain_agent.py`: LangChain tool adapter layer used by the MCP agent
+- `airbnb_mcp.json`: MCP server process configuration
 
-## 🙏 Acknowledgments
+## Contributing
 
-- [openbnb-org/mcp-server-airbnb](https://github.com/openbnb-org/mcp-server-airbnb) for the MCP server
-- OpenAI for the GPT models
-- LangChain for the agent framework
-- Streamlit for the web framework
+1. Create a feature branch.
+2. Make your changes.
+3. Run tests.
+4. Verify the Streamlit app locally.
+5. Open a pull request.
 
-## 📞 Support
+## License
 
-For support:
-1. Check the [Issues](https://github.com/ANUVIK2401/LLM-MCP-Travel-Orchestrator/issues) page
-2. Create a new issue if your problem isn't already listed
-3. Contact the maintainers for urgent issues
-
----
-
-Made with ❤️ by [Anuvik Thota]
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
