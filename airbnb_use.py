@@ -10,8 +10,13 @@ import os
 import sys
 import warnings
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from mcp_use import MCPAgent, MCPClient
+
+
+def _build_chat_openai(**kwargs):
+    from langchain_openai import ChatOpenAI
+
+    return ChatOpenAI(**kwargs)
 
 class SimpleChatbot:
     """A simple chatbot that can handle conversations and perform tasks."""
@@ -20,7 +25,7 @@ class SimpleChatbot:
         """Initialize the chatbot with necessary components."""
         load_dotenv()
         self.client = MCPClient.from_config_file(os.path.join(os.path.dirname(__file__), "airbnb_mcp.json"))
-        self.llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
+        self.llm = _build_chat_openai(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
         self.agent = MCPAgent(llm=self.llm, client=self.client, max_steps=30)
     
     async def process_message(self, message: str) -> str:

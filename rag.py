@@ -17,7 +17,6 @@ import requests
 from bs4 import BeautifulSoup
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 logger = logging.getLogger(__name__)
 
@@ -193,12 +192,16 @@ def _scrape_listing_text(url: str) -> str:
 
 
 @lru_cache(maxsize=4)
-def _get_embeddings(api_key: str) -> OpenAIEmbeddings:
+def _get_embeddings(api_key: str) -> Any:
+    from langchain_openai import OpenAIEmbeddings
+
     return OpenAIEmbeddings(model="text-embedding-3-large", api_key=api_key)
 
 
 @lru_cache(maxsize=4)
-def _get_summary_llm(api_key: str) -> ChatOpenAI:
+def _get_summary_llm(api_key: str) -> Any:
+    from langchain_openai import ChatOpenAI
+
     return ChatOpenAI(model="gpt-4o-mini", api_key=api_key, temperature=0)
 
 

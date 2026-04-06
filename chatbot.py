@@ -18,7 +18,6 @@ from typing import Any
 
 import streamlit as st
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 
 import nest_asyncio
 import rag
@@ -88,6 +87,16 @@ def _get_openai_api_key() -> str:
         secret_value = ""
 
     return str(secret_value).strip()
+
+
+def _build_chat_openai(**kwargs: Any) -> Any:
+    try:
+        from langchain_openai import ChatOpenAI
+    except Exception as exc:
+        raise RuntimeError(
+            "The LangChain OpenAI integration could not be imported in this runtime."
+        ) from exc
+    return ChatOpenAI(**kwargs)
 
 
 _CHECKIN, _CHECKOUT = _get_default_dates()
@@ -965,21 +974,32 @@ class SimpleChatbot:
     def __init__(self):
         self.api_key = _get_openai_api_key()
         self.client = MCPClient.from_config_file(str(MCP_CONFIG_PATH))
-        self.llm = ChatOpenAI(model="gpt-4o-mini", api_key=self.api_key or None)
-        self.agent = MCPAgent(
-            llm=self.llm,
-            client=self.client,
-            max_steps=30,
-            system_prompt=CUSTOM_SYSTEM_PROMPT,
-        )
+        self.llm = None
+        self.agent = None
         self.initialized = False
         self.last_error = ""
+        self.startup_error = ""
+
+        try:
+            self.llm = _build_chat_openai(model="gpt-4o-mini", api_key=self.api_key or None)
+            self.agent = MCPAgent(
+                llm=self.llm,
+                client=self.client,
+                max_steps=30,
+                system_prompt=CUSTOM_SYSTEM_PROMPT,
+            )
+        except Exception as exc:
+            self.startup_error = str(exc)
 
     async def ensure_initialized(self) -> None:
         if not self.api_key:
             raise RuntimeError("OpenAI API key is missing.")
         if not MCP_CONFIG_PATH.exists():
             raise RuntimeError("MCP config file is missing.")
+        if self.startup_error:
+            raise RuntimeError(self.startup_error)
+        if self.agent is None:
+            raise RuntimeError("The chatbot agent could not be created.")
         if not self.initialized:
             await self.agent.initialize()
             self.initialized = True
