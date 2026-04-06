@@ -7,7 +7,7 @@ Streamlit travel search app that combines:
 - RAG-based property summaries with metadata fallback
 - a structured results table plus per-listing AI insights
 
-The app entrypoint is `chatbot.py`.
+The main app module is `chatbot.py`.
 For Streamlit Community Cloud, use `streamlit_app.py` as the main file path.
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
@@ -231,6 +231,7 @@ pytest -q
 Before deploying, make sure the following are addressed:
 
 - main file path is set to `streamlit_app.py`
+- Python runtime is pinned by `runtime.txt` to `python-3.11`
 - `OPENAI_API_KEY` is configured in Streamlit secrets or environment settings
 - Node.js and npm are available through `packages.txt`
 - `airbnb_mcp.json` launches the Airbnb MCP server with `npx`
